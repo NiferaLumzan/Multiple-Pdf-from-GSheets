@@ -1,0 +1,67 @@
+function onOpen() {
+  var submenu = [{name:"Save PDF", functionName:"generatePdf_n"}];
+  SpreadsheetApp.getActiveSpreadsheet().addMenu('Export', submenu);  
+}
+
+var destSpreadsheet, sourceSpreadsheet, sheets, sheetName, sourceSheet, theBlob;
+var pdfName, folder;
+
+function generatePdf_n(){
+  nextBtn();
+  // Get active spreadsheet.
+  sourceSpreadsheet = SpreadsheetApp.getActive();
+  
+  // Get active sheet.
+  sheets = sourceSpreadsheet.getSheets();
+  sheetName = sourceSpreadsheet.getActiveSheet().getName();
+  sourceSheet = sourceSpreadsheet.getSheetByName(sheetName);
+  
+  // Get folder containing spreadsheet to save pdf in.
+  var parents = DriveApp.getFileById(sourceSpreadsheet.getId()).getParents();
+  if (parents.hasNext()) {
+    folder = parents.next();
+  }
+  else {
+    folder = DriveAp.getRootFolder(); //getFoldersByName("Print")
+  }
+
+    // Copy whole spreadsheet.
+  destSpreadsheet = SpreadsheetApp.open(DriveApp.getFileById(sourceSpreadsheet.getId()).makeCopy("tmp_convert_to_pdf", folder))
+
+  // Delete redundant sheets.
+  var sheets = destSpreadsheet.getSheets();
+  for (i = 0; i < sheets.length; i++) {
+    if (sheets[i].getSheetName() != sheetName){
+      destSpreadsheet.deleteSheet(sheets[i]);
+    }
+  }
+
+  // Save for multiple files 
+  for(var i = 1; i<=2; i++){
+    pdfName = i;
+    nextBtn();
+    generatePdf();
+  }
+  
+  // Delete the temporary sheet.
+  DriveApp.getFileById(destSpreadsheet.getId()).setTrashed(true);
+}
+
+function generatePdf() {
+  var destSheet = destSpreadsheet.getSheets()[0];
+
+  sourceSheet = SpreadsheetApp.getActive().getSheetByName(sheetName);
+
+  destSpreadsheet.getSheetByName("main").deleteRow(25);
+
+  // Repace cell values with text (to avoid broken references).
+  var sourceRange = sourceSheet.getRange(1,1,25, 7);
+  var sourcevalues = sourceRange.getValues();
+  var destRange = destSheet.getRange(1, 1, 25, 7);
+  destRange.setValues(sourcevalues);
+
+  // Save to pdf.
+  theBlob = destSpreadsheet.getBlob().getAs('application/pdf').setName(pdfName);
+  var newFile = folder.createFile(theBlob);
+
+}
