@@ -1,0 +1,8 @@
+function nextBtn() {  
+  var app = SpreadsheetApp.getActiveSpreadsheet()
+  var mainSheet = app.getSheetByName("main")
+  var scndSheet = app.getSheetByName("doc")
+  mainSheet.getRange(6, 1).setValue(scndSheet.getRange(1,1).getValue())
+  scndSheet.deleteRow(1)
+}
+
